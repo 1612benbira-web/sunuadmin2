@@ -1,0 +1,7 @@
+@import "tailwindcss";
+body { background:#f6f8f6; color:#1f2937; font-family: system-ui, sans-serif; }
+.btn { display:inline-flex; align-items:center; gap:.4rem; padding:.5rem .9rem; border-radius:.5rem; background:#0f6b3a; color:#fff; font-weight:600; cursor:pointer; }
+.btn:hover { background:#0b5530; } .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline:3px solid #f2b705; outline-offset:2px; }
+.btn.sec { background:#fff; color:#0f6b3a; border:1px solid #0f6b3a; } .btn.red { background:#b91c1c; } .btn:disabled { opacity:.5; }
+.inp { width:100%; border:1px solid #9ca3af; border-radius:.5rem; padding:.5rem .7rem; background:#fff; }
+.card { background:#fff; border:1px solid #e5e7eb; border-radius:.75rem; padding:1rem; }
