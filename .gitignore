@@ -1,3 +1,10 @@
-node_modules
+
+node_modules/
 .env
-uploads
+.env.*
+!.env.example
+uploads/
+dist/
+coverage/
+.DS_Store
+Thumbs.db

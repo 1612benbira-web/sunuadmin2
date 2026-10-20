@@ -22,6 +22,7 @@ const anon = () => request.agent(app).set(CSRF);
 const PW = 'MotDePasseDeTest12';
 let n = 0;
 const mail = (p) => `${p}${++n}@test.sn`;
+// dropDatabase supprime aussi les index uniques : on les recrée pour que les tests voient les mêmes contraintes qu'en vrai
 const reset = async () => { await mongoose.connection.dropDatabase(); await Promise.all(Object.values(mongoose.models).map((m) => m.createIndexes())); };
 async function creer(role, extra = {}) {
   const email = mail(role.toLowerCase());
@@ -198,4 +199,9 @@ test('profil : modification du nom et changement de mot de passe', async () => {
   assert.equal((await u.a.get('/api/v1/auth/me')).status, 200);                                  // session courante renouvelée
   assert.equal((await anon().post('/api/v1/auth/login').send({ email: u.email, password: PW })).status, 401);
   assert.equal((await anon().post('/api/v1/auth/login').send({ email: u.email, password: 'NouveauMotDePasse12' })).status, 200);
+});
+
+test('santé : la route répond sans en-tête CSRF et indique la base', async () => {
+  const r = await request(app).get('/api/v1/health');
+  assert.equal(r.status, 200); assert.equal(r.body.db, true);
 });

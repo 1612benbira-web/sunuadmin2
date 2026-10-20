@@ -11,7 +11,7 @@ import User from '../models/User.js';
 import Document from '../models/Document.js';
 import { storage, detectType } from '../services/storage.js';
 import { notify, audit as auditH } from '../utils/helpers.js';
-const up = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
+const up = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024, files: 1 } });
 const EXT = { 'application/pdf': '.pdf', 'image/png': '.png', 'image/jpeg': '.jpg' };
 const r = Router(); r.use(authenticate);
 const ref = () => `SA-${new Date().getFullYear()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;

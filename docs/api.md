@@ -22,7 +22,7 @@ Codes : 200, 201, 204, 401, 403, 404 (aussi pour un dossier d'autrui), 409 (conf
 | GET /requests/:id ; GET /requests/:id/history | propriétaire, agent affecté, admin | détail ; historique |
 | PATCH /requests/:id/status | selon transition | `{ statut, motif }` |
 | POST /requests/:id/assign | ADMIN | `{ agent }` (l'agent doit être rattaché au service de la démarche) |
-| POST /requests/:id/documents ; GET /requests/:id/documents | propriétaire (envoi) ; ayant droit (liste) | pièce `fichier` (PDF, PNG, JPEG, 5 Mo) |
+| POST /requests/:id/documents ; GET /requests/:id/documents | propriétaire (envoi) ; ayant droit (liste) | pièce `fichier` (PDF, PNG, JPEG, 4 Mo) |
 | GET /documents/:id, /documents/:id/download | ayant droit | métadonnées ; téléchargement |
 | PATCH /documents/:id/verification | AGENT, ADMIN | `{ verification: VALIDE\|REFUSE }` |
 | GET /notifications ; PATCH /notifications/read-all, /:id/read | connecté | notifications personnelles |

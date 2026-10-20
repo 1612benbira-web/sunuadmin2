@@ -35,7 +35,7 @@ export function RequestDetail() {
       <ul className="divide-y">{docs.map((x) => <li key={x._id} className="py-2 flex flex-wrap items-center gap-3 text-sm"><span className="flex-1">{x.nomOriginal} <span className="text-gray-500">({x.verification})</span></span>
         <a className="btn sec" href={`/api/v1/documents/${x._id}/download`}><Download size={14} />Télécharger</a>
         {staff && ['VALIDE', 'REFUSE'].map((v) => <button key={v} className="btn sec" onClick={() => act(() => api.patch(`/documents/${x._id}/verification`, { verification: v }), 'Vérification enregistrée.')}>{v === 'VALIDE' ? 'Valider' : 'Refuser'}</button>)}</li>)}</ul>
-      {user.role === 'CITOYEN' && ['BROUILLON', 'COMPLEMENT_REQUIS'].includes(d.statut) && <label className="btn mt-3 cursor-pointer"><Upload size={16} />Ajouter une pièce (PDF, PNG, JPEG, 5 Mo max)<input type="file" accept=".pdf,.png,.jpg,.jpeg" className="sr-only" onChange={upload} /></label>}</div>
+      {user.role === 'CITOYEN' && ['BROUILLON', 'COMPLEMENT_REQUIS'].includes(d.statut) && <label className="btn mt-3 cursor-pointer"><Upload size={16} />Ajouter une pièce (PDF, PNG, JPEG, 4 Mo max)<input type="file" accept=".pdf,.png,.jpg,.jpeg" className="sr-only" onChange={upload} /></label>}</div>
     <div className="card flex flex-wrap items-center gap-2"><h2 className="font-bold w-full">Actions</h2>
       {user.role === 'CITOYEN' && d.statut === 'BROUILLON' && <button className="btn" onClick={() => window.confirm('Soumettre ce dossier ? Il ne sera plus modifiable.') && setStatut('SOUMIS')}>Soumettre le dossier</button>}
       {user.role === 'CITOYEN' && d.statut === 'COMPLEMENT_REQUIS' && <button className="btn" onClick={() => setStatut('EN_COURS')}>Renvoyer le dossier complété</button>}

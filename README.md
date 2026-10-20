@@ -42,4 +42,4 @@ Deux fenêtres : `cd server; npm run dev` (API, port 5000) et `cd client; npm ru
 `cd server; npm test` (5 tests unitaires + tests d'API sur la base `sunuadmin_test`, vidée à chaque lancement : le nom doit finir par `_test`).
 
 ## Documentation
-`docs/architecture.md`, `docs/api.md`, `docs/security.md`, `docs/deployment.md`.
+`docs/architecture.md`, `docs/api.md`, `docs/security.md`, `docs/deployment.md` (Atlas + Render + Vercel, non testé en ligne ; fichiers `render.yaml` et `client/vercel.json`).

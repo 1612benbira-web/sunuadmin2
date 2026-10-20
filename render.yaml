@@ -1,0 +1,39 @@
+# Blueprint Render pour l'API. Plan gratuit : le service s'endort après 15 minutes d'inactivité et
+# le disque est éphémère (les fichiers envoyés disparaissent) -> utiliser S3_* ou un plan payant avec disque.
+services:
+  - type: web
+    name: sunuadmin-api
+    runtime: node
+    rootDir: server
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/v1/health
+    # Plan payant avec disque persistant : changer plan (ex. starter), décommenter, et mettre UPLOAD_DIR=/data/uploads
+    # disk:
+    #   name: uploads
+    #   mountPath: /data
+    #   sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "2"          # Vercel + Render. Mettre 1 si le client appelle directement l'API.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false         # URL exacte du site Vercel, sans « / » final
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
