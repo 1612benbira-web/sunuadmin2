@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 export const STATUTS = ['BROUILLON','SOUMIS','EN_ATTENTE','EN_COURS','COMPLEMENT_REQUIS','ACCEPTE','REJETE','CLOTURE'];
 const histo = new mongoose.Schema({
   ancien: String, nouveau: String, auteur: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  motif: String, date: { type: Date, default: Date.now },
+  motif: String, evenement: String, date: { type: Date, default: Date.now },
 }, { _id: false });
 const schema = new mongoose.Schema({
   reference: { type: String, unique: true, sparse: true },

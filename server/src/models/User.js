@@ -6,5 +6,7 @@ const schema = new mongoose.Schema({
   passwordHash: { type: String, required: true, select: false },
   role: { type: String, enum: ['CITOYEN', 'AGENT', 'ADMIN'], default: 'CITOYEN', index: true },
   actif: { type: Boolean, default: true },
+  tokenVersion: { type: Number, default: 0 },
+  services: [{ type: mongoose.Schema.Types.ObjectId, ref: 'AdministrativeService' }],
 }, { timestamps: true });
 export default mongoose.model('User', schema);

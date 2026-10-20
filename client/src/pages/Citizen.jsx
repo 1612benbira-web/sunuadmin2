@@ -9,7 +9,7 @@ export function MyRequests() {
   return (<div><div className="flex items-center mb-4"><h1 className="text-xl font-bold flex-1">Mes demandes</h1><Link className="btn" to="/">Nouvelle démarche</Link></div><Alert>{err}</Alert>
     {list && !list.length && <Empty>Vous n'avez aucune demande. Choisissez une démarche pour commencer.</Empty>}
     <div className="space-y-2">{list?.map((d) => <Link key={d._id} to={`/dossiers/${d._id}`} className="card flex items-center gap-3 hover:border-green-600">
-      <div className="flex-1"><p className="font-semibold">{procs[d.procedure] || d.procedureSnapshot?.nom || 'Démarche'}</p><p className="text-xs text-gray-500">{d.reference || 'Brouillon'} · créé le {fmt(d.createdAt)}</p></div><Badge s={d.statut} /></Link>)}</div></div>);
+      <div className="flex-1"><p className="font-semibold">{d.procedure?.nom || d.procedureSnapshot?.nom || 'Démarche'}</p><p className="text-xs text-gray-500">{d.reference || 'Brouillon'} · créé le {fmt(d.createdAt)}</p></div><Badge s={d.statut} /></Link>)}</div></div>);
 }
 const TYPES = { text: 'text', textarea: 'textarea', number: 'number', date: 'date', select: 'select', email: 'email', tel: 'tel' };
 export function NewRequest() {

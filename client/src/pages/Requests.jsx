@@ -6,13 +6,15 @@ import { useAuth } from '../auth.jsx';
 import { Alert, Badge, Empty } from '../ui.jsx';
 export function AgentQueue() {
   const [list, setList] = useState(null); const [f, setF] = useState(''); const [q, setQ] = useState(''); const [err, setErr] = useState('');
+  const [st, setSt] = useState(null); useEffect(() => { api.get('/requests/stats/me').then((x) => setSt(x.data)).catch(() => {}); }, []);
   useEffect(() => { api.get('/requests', { params: { statut: f || undefined } }).then((r) => setList(r.data)).catch((e) => setErr(msg(e))); }, [f]);
   const shown = list?.filter((d) => (d.reference || '').includes(q.toUpperCase()));
   return (<div><h1 className="text-xl font-bold mb-3">Dossiers qui me sont attribués</h1>
+    {st && <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">{[['Attribués', st.attribues], ['En cours', st.enCours], ['Compléments', st.complement], ['Acceptés', st.acceptes], ['Délai moyen (h)', st.delaiMoyenHeures ?? '—']].map(([l, v]) => <div key={l} className="card"><p className="text-2xl font-bold text-green-900">{v}</p><p className="text-sm text-gray-600">{l}</p></div>)}</div>}
     <div className="flex flex-wrap gap-2 mb-3"><input aria-label="Référence" className="inp max-w-xs" placeholder="Référence SA-…" value={q} onChange={(e) => setQ(e.target.value)} />
       <select aria-label="Statut" className="inp max-w-xs" value={f} onChange={(e) => setF(e.target.value)}><option value="">Tous les statuts</option>{['SOUMIS', 'EN_COURS', 'COMPLEMENT_REQUIS', 'ACCEPTE', 'REJETE'].map((s) => <option key={s} value={s}>{s}</option>)}</select></div>
     <Alert>{err}</Alert>{shown && !shown.length && <Empty>Aucun dossier.</Empty>}
-    <div className="space-y-2">{shown?.map((d) => <Link key={d._id} to={`/dossiers/${d._id}`} className="card flex items-center gap-3 hover:border-green-600"><div className="flex-1"><p className="font-semibold">{d.reference}</p><p className="text-xs text-gray-500">Soumis le {fmt(d.soumisLe)}</p></div><Badge s={d.statut} /></Link>)}</div></div>);
+    <div className="space-y-2">{shown?.map((d) => <Link key={d._id} to={`/dossiers/${d._id}`} className="card flex items-center gap-3 hover:border-green-600"><div className="flex-1"><p className="font-semibold">{d.reference} — {d.procedure?.nom}</p><p className="text-xs text-gray-500">{d.demandeur?.prenom} {d.demandeur?.nom} · soumis le {fmt(d.soumisLe)}</p></div><Badge s={d.statut} /></Link>)}</div></div>);
 }
 export function RequestDetail() {
   const { id } = useParams(); const { user } = useAuth();
@@ -43,5 +45,5 @@ export function RequestDetail() {
         <button className="btn red" onClick={() => window.confirm('Rejeter définitivement ce dossier ?') && setStatut('REJETE')}>Rejeter</button></>}
       {user.role === 'ADMIN' && ['ACCEPTE', 'REJETE'].includes(d.statut) && <button className="btn sec" onClick={() => setStatut('CLOTURE')}>Clôturer</button>}
       {!['BROUILLON', 'COMPLEMENT_REQUIS'].includes(d.statut) && user.role === 'CITOYEN' && <p className="text-sm text-gray-500">Aucune action disponible pour le moment.</p>}</div>
-    <div className="card"><h2 className="font-bold mb-2">Historique</h2><ol className="text-sm space-y-1">{d.historique.map((h, i) => <li key={i}>{fmt(h.date)} — {h.ancien} → <b>{h.nouveau}</b>{h.motif && ` (${h.motif})`}</li>)}</ol></div></div>);
+    <div className="card"><h2 className="font-bold mb-2">Historique</h2><ol className="text-sm space-y-1">{d.historique.map((h, i) => <li key={i}>{fmt(h.date)} — {h.evenement === 'AFFECTATION' ? <b>{h.motif}</b> : <>{h.ancien} → <b>{h.nouveau}</b>{h.motif && ` (${h.motif})`}</>}</li>)}</ol></div></div>);
 }

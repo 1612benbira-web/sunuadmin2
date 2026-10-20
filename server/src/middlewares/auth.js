@@ -4,9 +4,9 @@ export async function authenticate(req, res, next) {
   try {
     const token = req.cookies?.token;
     if (!token) return res.status(401).json({ message: 'Authentification requise.' });
-    const { sub } = jwt.verify(token, process.env.JWT_SECRET);
+    const { sub, v } = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(sub);
-    if (!user || !user.actif) return res.status(401).json({ message: 'Compte invalide.' });
+    if (!user || !user.actif || (v ?? 0) !== (user.tokenVersion || 0)) return res.status(401).json({ message: 'Compte invalide.' });
     req.user = user; next();
   } catch { res.status(401).json({ message: 'Session invalide.' }); }
 }

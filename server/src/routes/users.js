@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import User from '../models/User.js';
+import AdministrativeService from '../models/AdministrativeService.js';
 import { authenticate, authorize } from '../middlewares/auth.js';
 import { audit, wrap, page, validId } from '../utils/helpers.js';
 const r = Router(); r.use(authenticate, authorize('ADMIN'));
@@ -17,6 +18,17 @@ r.post('/', wrap(async (req, res) => {
   const { password, ...d } = p.data;
   if (await User.exists({ email: d.email.toLowerCase() })) return res.status(409).json({ message: 'E-mail déjà utilisé.' });
   const u = await User.create({ ...d, passwordHash: await bcrypt.hash(password, 12) }); await audit(req, 'USER_CREATE', 'User', u.id); res.status(201).json(u);
+}));
+r.patch('/:id', wrap(async (req, res) => {
+  const p = z.object({ nom: z.string().min(1).optional(), prenom: z.string().min(1).optional(), services: z.array(z.string().regex(/^[a-f\d]{24}$/i)).optional() }).safeParse(req.body);
+  if (!p.success || !validId(req.params.id)) return res.status(422).json({ message: 'Données invalides.' });
+  const u = await User.findById(req.params.id);
+  if (!u) return res.status(404).json({ message: 'Introuvable.' });
+  if (p.data.services) {
+    if (u.role !== 'AGENT') return res.status(409).json({ message: 'Seuls les agents sont rattachés à des services.' });
+    if (await AdministrativeService.countDocuments({ _id: { $in: p.data.services } }) !== new Set(p.data.services).size) return res.status(422).json({ message: 'Service inconnu.' });
+  }
+  Object.assign(u, p.data); await u.save(); await audit(req, 'USER_UPDATE', 'User', u.id); res.json(u);
 }));
 r.patch('/:id/status', wrap(async (req, res) => {
   if (!validId(req.params.id) || typeof req.body.actif !== 'boolean') return res.status(422).json({ message: 'Données invalides.' });

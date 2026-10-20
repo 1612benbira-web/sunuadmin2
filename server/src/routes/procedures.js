@@ -6,7 +6,7 @@ import { audit, wrap, page, validId } from '../utils/helpers.js';
 const r = Router();
 const body = z.object({
   nom: z.string().min(2), description: z.string().optional(), categorie: z.string().optional(), instructions: z.string().optional(),
-  delaiIndicatifJours: z.number().int().positive().optional(), piecesRequises: z.array(z.string()).optional(), actif: z.boolean().optional(),
+  delaiIndicatifJours: z.number().int().positive().optional(), piecesRequises: z.array(z.string()).optional(), service: z.string().regex(/^[a-f\d]{24}$/i).optional(), actif: z.boolean().optional(),
   champs: z.array(z.object({ name: z.string().regex(/^[a-zA-Z_]\w*$/), label: z.string(), type: z.enum(FIELD_TYPES), required: z.boolean().optional(), options: z.array(z.string()).optional() })).optional(),
 });
 // Catalogue public : seulement les procédures actives
@@ -15,6 +15,12 @@ r.get('/', wrap(async (req, res) => {
   if (req.query.q) f.$text = { $search: String(req.query.q) };
   if (req.query.categorie) f.categorie = String(req.query.categorie);
   const [data, total] = await Promise.all([Procedure.find(f).skip(skip).limit(limit), Procedure.countDocuments(f)]);
+  res.json({ data, page: p, total });
+}));
+// Liste complète pour l'administration (actives et inactives)
+r.get('/admin/all', authenticate, authorize('ADMIN'), wrap(async (req, res) => {
+  const { skip, limit, p } = page(req.query);
+  const [data, total] = await Promise.all([Procedure.find().sort('-createdAt').skip(skip).limit(limit), Procedure.countDocuments()]);
   res.json({ data, page: p, total });
 }));
 r.get('/:id', wrap(async (req, res) => {
@@ -28,7 +34,7 @@ r.post('/', authenticate, authorize('ADMIN'), wrap(async (req, res) => {
 r.patch('/:id', authenticate, authorize('ADMIN'), wrap(async (req, res) => {
   const p = body.partial().safeParse(req.body); if (!p.success || !validId(req.params.id)) return res.status(422).json({ message: 'Données invalides.' });
   // version incrémentée : les dossiers soumis gardent leur instantané
-  const d = await Procedure.findByIdAndUpdate(req.params.id, { ...p.data, $inc: { version: 1 } }, { new: true });
+  const d = await Procedure.findByIdAndUpdate(req.params.id, { ...p.data, ...(Object.keys(p.data).some((k) => k !== 'actif') ? { $inc: { version: 1 } } : {}) }, { new: true });
   if (!d) return res.status(404).json({ message: 'Procédure introuvable.' });
   await audit(req, 'PROCEDURE_UPDATE', 'Procedure', d.id); res.json(d);
 }));

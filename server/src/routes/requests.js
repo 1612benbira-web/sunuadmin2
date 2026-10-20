@@ -19,13 +19,23 @@ const peutVoir = (u, d) => u.role === 'ADMIN' || (u.role === 'CITOYEN' && String
 r.get('/', async (req, res) => {
   const f = req.user.role === 'CITOYEN' ? { demandeur: req.user.id } : req.user.role === 'AGENT' ? { agent: req.user.id } : {};
   if (req.query.statut) f.statut = String(req.query.statut);
-  res.json(await ApplicationRequest.find(f).sort('-createdAt').limit(100));
+  res.json(await ApplicationRequest.find(f).sort('-createdAt').limit(100).populate('procedure', 'nom').populate('demandeur', 'nom prenom'));
 });
 r.post('/', async (req, res) => {
   if (req.user.role !== 'CITOYEN') return res.status(403).json({ message: 'Réservé aux citoyens.' });
   const p = await Procedure.findOne({ _id: req.body.procedure, actif: true }).catch(() => null);
   if (!p) return res.status(404).json({ message: 'Procédure introuvable.' });
   res.status(201).json(await ApplicationRequest.create({ demandeur: req.user.id, procedure: p.id, reponses: req.body.reponses || {} }));
+});
+r.get('/stats/me', async (req, res) => {
+  if (req.user.role !== 'AGENT') return res.status(403).json({ message: 'Réservé aux agents.' });
+  const mine = { agent: req.user._id };
+  const [parStatut, delai] = await Promise.all([
+    ApplicationRequest.aggregate([{ $match: mine }, { $group: { _id: '$statut', n: { $sum: 1 } } }]),
+    ApplicationRequest.aggregate([{ $match: { ...mine, soumisLe: { $type: 'date' }, decisionLe: { $type: 'date' } } }, { $group: { _id: null, ms: { $avg: { $subtract: ['$decisionLe', '$soumisLe'] } } } }]),
+  ]);
+  const c = Object.fromEntries(parStatut.map((x) => [x._id, x.n]));
+  res.json({ attribues: Object.values(c).reduce((a, b) => a + b, 0), enCours: c.EN_COURS || 0, complement: c.COMPLEMENT_REQUIS || 0, acceptes: c.ACCEPTE || 0, rejetes: c.REJETE || 0, delaiMoyenHeures: delai[0] ? +(delai[0].ms / 36e5).toFixed(2) : null });
 });
 r.get('/:id', async (req, res) => {
   const d = await ApplicationRequest.findById(req.params.id).catch(() => null);
@@ -45,6 +55,9 @@ r.patch('/:id/status', async (req, res) => {
   d.statut = p.data.statut;
   d.historique.push({ ancien, nouveau: d.statut, auteur: req.user.id, motif: p.data.motif });
   await d.save();
+  const txt = `Dossier ${d.reference || ''} : nouveau statut ${d.statut}`;
+  if (req.user.role !== 'CITOYEN') await notify(d.demandeur, 'STATUT', txt, d.id);
+  else if (d.agent) await notify(d.agent, 'STATUT', txt, d.id);
   await AuditLog.create({ acteur: req.user.id, action: 'REQUEST_STATUS', ressource: 'ApplicationRequest', ressourceId: d.id, resultat: 'OK' });
   res.json(d);
 });
@@ -59,7 +72,9 @@ r.post('/:id/assign', async (req, res) => {
   const a = /^[a-f\d]{24}$/i.test(String(req.body.agent)) && await User.findOne({ _id: req.body.agent, role: 'AGENT', actif: true });
   if (!d || !a) return res.status(404).json({ message: 'Dossier ou agent introuvable.' });
   if (['BROUILLON', 'CLOTURE'].includes(d.statut)) return res.status(409).json({ message: 'Affectation impossible dans ce statut.' });
-  d.agent = a.id; await d.save(); await notify(a.id, 'AFFECTATION', `Dossier ${d.reference} affecté`, d.id); await auditH(req, 'REQUEST_ASSIGN', 'ApplicationRequest', d.id);
+  const svc = d.procedureSnapshot?.service;
+  if (svc && !a.services.some((x) => String(x) === String(svc))) return res.status(409).json({ message: "Cet agent n'est pas rattaché au service responsable de cette démarche." });
+  d.agent = a.id; d.historique.push({ ancien: d.statut, nouveau: d.statut, auteur: req.user.id, evenement: 'AFFECTATION', motif: `Affecté à ${a.prenom} ${a.nom}` }); await d.save(); await notify(a.id, 'AFFECTATION', `Dossier ${d.reference} affecté`, d.id); await auditH(req, 'REQUEST_ASSIGN', 'ApplicationRequest', d.id);
   res.json(d);
 });
 r.post('/:id/documents', up.single('fichier'), async (req, res) => {

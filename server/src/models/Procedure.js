@@ -7,7 +7,7 @@ const field = new mongoose.Schema({
 }, { _id: false });
 const schema = new mongoose.Schema({
   nom: { type: String, required: true, trim: true }, description: String,
-  categorie: { type: String, index: true }, version: { type: Number, default: 1 },
+  categorie: { type: String, index: true }, service: { type: mongoose.Schema.Types.ObjectId, ref: 'AdministrativeService' }, version: { type: Number, default: 1 },
   champs: [field], piecesRequises: [String], instructions: String, delaiIndicatifJours: Number,
   actif: { type: Boolean, default: true },
 }, { timestamps: true });
